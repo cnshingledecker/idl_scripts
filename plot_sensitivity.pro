@@ -15,16 +15,9 @@ species_style=[0,1]
 style1 = 0
 style2 = 2
 
-rep = ['high_zeta_high_opr_low_T','high_zeta_low_opr_low_T','low_zeta_low_opr_low_T','low_zeta_high_opr_low_T']
-leg_label = ['$\zeta =1.3\times 10^{-15}$ s$^{-1}$, OPR=3', $
-             '$\zeta =1.3\times 10^{-15}$ s$^{-1}$, OPR=0.01', $
-             '$\zeta =1.3\times 10^{-17}$ s$^{-1}$, OPR=0.01', $
-             '$\zeta =1.3\times 10^{-17}$ s$^{-1}$, OPR=3'$
-            ]
 
-
-nrep = 66;SIZE(rep, /N_ELEMENTS)
-base_rep = 'model_run_'
+nrep = 50;SIZE(rep, /N_ELEMENTS)
+base_rep = 'OPR_run_'
 PRINT, "The number of reps is",nrep
 
 plot_name = species_tab[0]+'_.eps'
@@ -32,6 +25,8 @@ plot_name = species_tab[0]+'_.eps'
 range_time = [1e0,1e7]
 range_abundance = [1e-4,1]
 ;range_abundance = [0,1e5]
+
+out_array = fltarr(nrep+1,ntime)
 
 ; === IDL/GDL CODE ========================================
 
@@ -78,7 +73,7 @@ ystyle=1, $ ;yrange=range_abundance, $
 /NODATA,FONT_NAME='Hershey 3',TITLE=species_tab[0]+'/'+species_tab[1]+' Sensitivity Analysis' )
 
 
-for r=1,nrep do begin
+for r=0,nrep do begin
 rep = base_rep + STRTRIM(r,1)
 
 for s=0,nsp-1 do begin
@@ -92,15 +87,19 @@ for i=0,ntime-1 do begin
   openr,1,char, /f77_unformatted
   readu,1,time
   time_all(i)=time
+  out_array(0,i) = time/3.15e7
   readu,1,temp,dens,tau
   readu,1,ab
   ab_select(i,*) = ab(index,*)
+  out_array(r,i) = ab(index,*) 
   close,1
 endfor
 
 if s eq 0 then ab_select_1 = ab_select
 if s eq 1 then ab_select_2 = ab_select
 if s eq 2 then ab_select_3 = ab_select
+
+
 
 ;print,'    ','time [yr] abundance '+species_tab[s]+' [/nH] '+color_tab_name[species_color[s]]
 ;for i=0,ntime-1 do print,time_all(i)/3.15e7,ab_select(i,0)
@@ -134,9 +133,11 @@ plot4 = plot( time_all/3.15e7,ab_select_1(*,0)/ab_select_2(*,0), $
 endfor ;r
 
 
-device,/close
 
- 
+
+out_array = TRANSPOSE(out_array)
+WRITE_CSV, 'abundances.csv',out_array
+
 PRINT, 'Ending script!'
 
 end
