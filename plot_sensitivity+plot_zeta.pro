@@ -4,23 +4,24 @@
 ; To run: .r plot_time
 
 ; === PARAMETERS ==========================================
+!PATH = Expand_Path('+~/Dropbox/coyote/') + ':' + !PATH
 
-ntime = 65
+ntime = 81
 npoint = 1
 ns = 1574
 
-species_tab=['DCO+','HCO+']
+species_tab=['HCO+','DCO+']
 species_style=[0,1]
 
 style1 = 0
 style2 = 2
 
-output_per_decade = 8
-decade = 6
+output_per_decade = 10
+decade = 5
 time_num = decade*output_per_decade + 1 
 
 nrep = 499;SIZE(rep, /N_ELEMENTS)
-base_rep = 'zeta_run_'
+base_rep = 'both_run_'
 PRINT, "The number of reps is",nrep
 
 plot_name = species_tab[0]+'_.eps'
@@ -32,18 +33,20 @@ range_abundance = [1e-5,0.1]
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
 
-zeta_data = READ_CSV('zeta.out',N_TABLE_HEADER=0)
+zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
+pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
 
 ; === IDL/GDL CODE ========================================
 
 device,decomposed=0
+loadct,0
 
-plot_name = 'plot_abundance_vs_zeta_random_log_increment_zeta_only.eps'
+plot_name = 'plot_abundance_vs_zeta_random_log_increment_zeta_and_OPR_decade_6.eps'
 print,' eps file : ',plot_name
 read,'eps (0) or screen (1)',aff
 if aff eq 0 then begin
   set_plot,'ps'
-  device, filename=plot_name,scale_factor=2,/landscape
+  device, filename=plot_name,scale_factor=2,/landscape,/COLOR
 endif 
 
 nsp=size(species_tab,/N_ELEMENTS)
@@ -77,7 +80,7 @@ ab_select = fltarr(ntime,npoint)
 ;xtitle='time [yr]',ytitle='abundance ratio', $
 ;xstyle=1, xrange=range_time, $
 ;ystyle=1, $ ;yrange=range_abundance, $
-;/NODATA,FONT_NAME='Hershey 3',TITLE=species_tab[0]+'/'+species_tab[1]+' Sensitivity Analysis' )
+;/NODATA,FONT_NAME='Hershey 3')
 
 
 for r=1,nrep do begin
@@ -88,10 +91,11 @@ for s=0,nsp-1 do begin
 
 species = species_tab[s]
 index = where(spec eq species)
-
+;PRINT, index
+IF index EQ -1 THEN STOP
 for i=0,ntime-1 do begin
   char = string(i+1,format='(i06)')
-  char = strcompress('/disk2/cns/random_zeta_analysis/'+rep+'/output_1D.'+char, /remove_all)
+  char = strcompress('/home/cns/random_both_analysis/'+rep+'/output_1D.'+char, /remove_all)
   openr,1,char, /f77_unformatted
   readu,1,time
   time_all(i)=time
@@ -142,18 +146,23 @@ out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 endfor ;r
 
 
-plot, -1*ALOG(zeta_data.FIELD1[0:498]),zeta_array, $
-  /xlog,/ylog, $ ;charsize=1.5, $
-  xtitle='-LOG($\zeta$)',ytitle='abundance ratio', $
-  xstyle=1,$ 
-  ystyle=1, $
-  TITLE=species_tab[0]+'/'+species_tab[1]+' Sensitivity Analysis', PSYM=3
+;cgplot, 1E17*zeta_data.FIELD5[0:nrep-1],zeta_array, $
+;  /xlog,/ylog, $ ;charsize=1.5, $
+;  xtitle='$\zeta$ x 10$\up17$ s$\up-1$',ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
+;  xstyle=1,$ 
+;  ystyle=1, $
+;  TITLE='10$\up6$ yr', PSYM=2, FONT=-1,CHARSIZE=1.5
+;  
+;
+;tvlct, 255,0,0,125
+;oplot, 1E17*pure_zeta.FIELD1,pure_zeta.FIELD2,PSYM='2', COLOR=125,SYMSIZE=0.4
 
-PRINT, zeta_array
+c = CONTOUR(zeta_array ,1E17*zeta_data.FIELD5[0:nrep-1],zeta_data.FIELD1[0:nrep-1], /FILL,/XLOG,/YLOG,YRANGE=[0.001,3],RGB_TABLE=22)
+cb = COLORBAR(position=[0.15,0.92,0.9,0.98],/BORDER,ORIENTATION=0)
+;PRINT, pure_zeta.FIELD2
+
 out_array = TRANSPOSE(out_array)
-WRITE_CSV, '/disk2/cns/random_zeta_analysis/abundances.csv',out_array
-HELP, zeta_data, /st
-PRINT, zeta_data.FIELD1[0:498]
+WRITE_CSV, '/home/cns/random_both_analysis/abundances.csv',out_array
 
 if aff eq 0 then begin
   device,/close
