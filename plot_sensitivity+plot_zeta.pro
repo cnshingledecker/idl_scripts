@@ -6,7 +6,7 @@
 ; === PARAMETERS ==========================================
 !PATH = Expand_Path('+~/Dropbox/coyote/') + ':' + !PATH
 
-ntime = 81
+ntime = 123 
 npoint = 1
 ns = 1574
 
@@ -17,11 +17,13 @@ style1 = 0
 style2 = 2
 
 output_per_decade = 10
-decade = 5
+decade = 6
 time_num = decade*output_per_decade + 1 
+time_num = 100 
+PRINT, time_num
 
-nrep = 499;SIZE(rep, /N_ELEMENTS)
-base_rep = 'both_run_'
+nrep = 79;SIZE(rep, /N_ELEMENTS)
+base_rep = 'random_collapse_run_'
 PRINT, "The number of reps is",nrep
 
 plot_name = species_tab[0]+'_.eps'
@@ -33,8 +35,11 @@ range_abundance = [1e-5,0.1]
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
 
+
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
 pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
+
+;print, zeta_data.FIELD2
 
 ; === IDL/GDL CODE ========================================
 
@@ -84,7 +89,7 @@ ab_select = fltarr(ntime,npoint)
 
 
 for r=1,nrep do begin
-PRINT, r
+;PRINT, r
 rep =   base_rep + STRTRIM(r-1,1)
 
 for s=0,nsp-1 do begin
@@ -95,7 +100,7 @@ index = where(spec eq species)
 IF index EQ -1 THEN STOP
 for i=0,ntime-1 do begin
   char = string(i+1,format='(i06)')
-  char = strcompress('/home/cns/random_both_analysis/'+rep+'/output_1D.'+char, /remove_all)
+  char = strcompress('/home/cns/random_collapse_spin/'+rep+'/output_1D.'+char, /remove_all)
   openr,1,char, /f77_unformatted
   readu,1,time
   time_all(i)=time
@@ -146,19 +151,19 @@ out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 endfor ;r
 
 
-;cgplot, 1E17*zeta_data.FIELD5[0:nrep-1],zeta_array, $
-;  /xlog,/ylog, $ ;charsize=1.5, $
-;  xtitle='$\zeta$ x 10$\up17$ s$\up-1$',ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
-;  xstyle=1,$ 
-;  ystyle=1, $
-;  TITLE='10$\up6$ yr', PSYM=2, FONT=-1,CHARSIZE=1.5
+cgplot, zeta_data.FIELD5[0:nrep-1],zeta_array, $
+  /xlog,/ylog, $ ;charsize=1.5, $
+  xtitle='$\zeta$ x 10$\up17$ s$\up-1$',ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
+  xstyle=1,$ 
+  ystyle=1, $
+  TITLE='10$\up6$ yr', PSYM=2, FONT=-1,CHARSIZE=1.5
 ;  
 ;
 ;tvlct, 255,0,0,125
 ;oplot, 1E17*pure_zeta.FIELD1,pure_zeta.FIELD2,PSYM='2', COLOR=125,SYMSIZE=0.4
 
-c = CONTOUR(zeta_array ,1E17*zeta_data.FIELD5[0:nrep-1],zeta_data.FIELD1[0:nrep-1], /FILL,/XLOG,/YLOG,YRANGE=[0.001,3],RGB_TABLE=22)
-cb = COLORBAR(position=[0.15,0.92,0.9,0.98],/BORDER,ORIENTATION=0)
+;c = CONTOUR(zeta_array ,1E17*zeta_data.FIELD2[0:nrep-1],zeta_data.FIELD1[0:nrep-1], /FILL,/XLOG,/YLOG,YRANGE=[0.001,3],RGB_TABLE=22)
+;cb = COLORBAR(position=[0.15,0.92,0.9,0.98],/BORDER,ORIENTATION=0)
 ;PRINT, pure_zeta.FIELD2
 
 out_array = TRANSPOSE(out_array)
