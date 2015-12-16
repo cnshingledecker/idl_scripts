@@ -39,13 +39,7 @@ omega = 0.85 ; same as above
 sigma_e = 5E-22 ; 
 
 J = C2*(m_p/m_e)*T*(omega/nu)^(1/(omega+nu))
-a = C2*(m_p/m_e)*(T/Z)*((C1*sigma_e*(omega+nu))/(sigma_0*nu))^(1/omega)
-
-sigma_ex_num = sigma_0*((Z*a)^(omega))*((tau-Ek)^(nu))
-sigma_ex_den = (J^(omega+nu)) + (tau^(omega+nu))
-sigma_ex = sigma_ex_num/sigma_ex_den
-print, 'The value of the excitation cross-section is:',sigma_ex
-
+a = C2*(m_p/m_e)*(T/Z)*((C1)/(sigma_0*nu))^(1/omega)
 
 
 END 
