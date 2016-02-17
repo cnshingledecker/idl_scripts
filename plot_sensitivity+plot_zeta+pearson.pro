@@ -21,11 +21,12 @@ style2 = 2
 
 output_per_decade = 10
 decade = 6
-time_num = decade*output_per_decade + 1 
-time_num = 61
-PRINT, time_num
+;time_num = decade*output_per_decade + 1 
+time_num = 55
+;PRINT, time_num
 
-nrep = 499;SIZE(rep, /N_ELEMENTS)
+isoreps = ['0_1_zeta_only','0_01_zeta_only','1_zeta_only','3_zeta_only']
+nrep = 200;SIZE(rep, /N_ELEMENTS)
 base_rep = 'both_run_'
 PRINT, "The number of reps is",nrep
 
@@ -49,7 +50,7 @@ pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0
 device,decomposed=0
 loadct,0
 
-plot_name = 'plot_abundance_vs_zeta_random_log_increment_zeta_and_OPR_decade_6.eps'
+plot_name = 'notitle_abs_vs_zeta_105dens_24K.eps'
 print,' eps file : ',plot_name
 read,'eps (0) or screen (1)',aff
 if aff eq 0 then begin
@@ -103,7 +104,7 @@ index = where(spec eq species)
 IF index EQ -1 THEN STOP
 for i=0,ntime-1 do begin
   char = string(i+1,format='(i06)')
-  char = strcompress('/home/cns/random_both_analysis/'+rep+'/output_1D.'+char, /remove_all)
+  char = strcompress(rep+'/output_1D.'+char, /remove_all)
   openr,1,char, /f77_unformatted
   readu,1,time
   time_all(i)=time
@@ -154,35 +155,36 @@ out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 endfor ;r
 
 
-cgplot, zeta_data.FIELD5[0:nrep-1],zeta_array, $ ;
+cgplot, zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
   /xlog,/ylog, $ ;charsize=1.5, $
   xtitle='$\zeta$ x 10$\up17$ s$\up-1$',ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
   xstyle=1,$ 
   ystyle=1, $
-  TITLE='W51C at 10$\up6$ yr (T=24K & initial OPR=0.1)', PSYM=2, FONT=-1,CHARSIZE=1.5, YRANGE=[5,2E4], /NODATA
+;  TITLE='Abundance Ratio vs. $\zeta$ at 10$\up6$ yr T=10K & n$\downH2$=10$\up4$ cm$\up-3$)', $
+  PSYM=2, FONT=-1,CHARSIZE=1.5, YRANGE=[1,5E4], XRANGE=[1,1000];, /NODATA
 
-;Add observational constraint regions
-xobs1 = [3E-17,1E-16,1E-16,3E-17]
-yobs1 = [2E1,2E1,4E1,4E1]
-
-xobs2 = [7E-16,2E-15,2E-15,7E-16]
-yobs2 = [2E2,2E2,1E3,1E3]
-
-polyfill, xobs1,yobs1, COLOR=175
-polyfill, xobs2,yobs2, COLOR=175
-
-oplot, zeta_data.FIELD5[0:nrep-1],zeta_array,PSYM='2', COLOR=0,SYMSIZE=0.4
-tvlct, 255,0,0,125
-oplot, pure_zeta.FIELD1,pure_zeta.FIELD2,PSYM='2', COLOR=50,SYMSIZE=0.4
+;;Add observational constraint regions
+;xobs1 = [3E-17,1E-16,1E-16,3E-17]
+;yobs1 = [2E1,2E1,4E1,4E1]
+;
+;xobs2 = [7E-16,2E-15,2E-15,7E-16]
+;yobs2 = [2E2,2E2,1E3,1E3]
+;
+;polyfill, xobs1,yobs1, COLOR=175
+;polyfill, xobs2,yobs2, COLOR=175
+;
+;oplot, zeta_data.FIELD5[0:nrep-1],zeta_array,PSYM='2', COLOR=0,SYMSIZE=0.4
+;tvlct, 255,0,0,125
+;oplot, pure_zeta.FIELD1,pure_zeta.FIELD2,PSYM='2', COLOR=50,SYMSIZE=0.4
 
 ;c = CONTOUR(zeta_array ,1E17*zeta_data.FIELD2[0:nrep-1],zeta_data.FIELD1[0:nrep-1], /FILL,/XLOG,/YLOG,YRANGE=[0.001,3],RGB_TABLE=22)
 ;cb = COLORBAR(position=[0.15,0.92,0.9,0.98],/BORDER,ORIENTATION=0)
 ;PRINT, pure_zeta.FIELD2
 
-WRITE_CSV, '/home/cns/random_both_analysis/abundances.csv',out_array
-outname = redpath + STRTRIM(string(time_num),1) + '_time_' + varied + '.csv'
-PRINT, outname
-WRITE_CSV, outname, zeta_data.FIELD5[0:nrep-1],zeta_array
+;WRITE_CSV, 'abundances.csv',out_array
+;outname = redpath + STRTRIM(string(time_num),1) + '_time_' + varied + '.csv'
+;PRINT, outname
+;WRITE_CSV, outname, zeta_data.FIELD5[0:nrep-1],zeta_array
 
 if aff eq 0 then begin
   device,/close
@@ -191,52 +193,51 @@ if aff eq 0 then begin
 endif
 
 ;Make a 2d array containing the zeta and abundance ratio information
-pure = MAKE_ARRAY(2,nrep)
-pure[0,*] = pure_zeta.FIELD1
-pure[1,*] = pure_zeta.FIELD2
+;pure = MAKE_ARRAY(2,nrep)
+;pure[0,*] = pure_zeta.FIELD1
+;pure[1,*] = pure_zeta.FIELD2
 ;Print, pure 
 
 ; Sort the 2d array based on the values of the first column
-sortIndex = Sort( pure[0,*] )
-FOR j=0,1 DO pure[j, *] = pure[j, sortIndex]
+;sortIndex = Sort( pure[0,*] )
+;FOR j=0,1 DO pure[j, *] = pure[j, sortIndex]
 ;Print, "And the sorted data is:"
 ;Print, pure
 
 
 ;Now do the same for the both data
-danger = MAKE_ARRAY(2,nrep)
-danger[0,*] = zeta_data.FIELD5[0:nrep-1]
-danger[1,*] = zeta_array
-sortIndex = Sort( danger[0,*] )
-FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
+;danger = MAKE_ARRAY(2,nrep)
+;danger[0,*] = zeta_data.FIELD5[0:nrep-1]
+;danger[1,*] = zeta_array
+;sortIndex = Sort( danger[0,*] )
+;FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
 
 ;Now truncate the 2d array at a point in zeta corresponding to the transition
 ;from multiply to single valued.
-zetacutoff = 1E-16
-cutind = 0
-FOR j=0,nrep-1 DO BEGIN
-  IF ( pure[0,j] GE zetacutoff ) THEN BEGIN
-    PRINT, "********************"
-    PRINT, pure[0,j]
-    PRINT, "The zeta value",pure[0,j]," is greater than the cutoff"
-    cutind = j
-    PRINT, "The cutind is: ",cutind
-    BREAK
-  ENDIF
-ENDFOR
+;zetacutoff = 1E-16
+;cutind = 0
+;FOR j=0,nrep-1 DO BEGIN
+;  IF ( pure[0,j] GE zetacutoff ) THEN BEGIN
+;    PRINT, "********************"
+;    PRINT, pure[0,j]
+;    PRINT, "The zeta value",pure[0,j]," is greater than the cutoff"
+;    cutind = j
+;    PRINT, "The cutind is: ",cutind
+;    BREAK
+;  ENDIF
+;ENDFOR
 
 
-PRINT, "This is just to determine if the damn thing is working"
 
 
-PRINT, 'Now Calculating Pearson Coefficients'
-ppure = CORRELATE(pure[0,0:cutind],pure[1,0:cutind])
-pdanger = CORRELATE(danger[0,0:cutind],danger[1,0:cutind])
-
-diffval = 100*(ppure-pdanger)/ppure
-PRINT, 'The pure coefficient is: ',ppure
-PRINT, 'The both coefficient is: ',pdanger
-PRINT, 'The difference between the two is: ', diffval,'%'
+;PRINT, 'Now Calculating Pearson Coefficients'
+;ppure = CORRELATE(pure[0,0:cutind],pure[1,0:cutind])
+;pdanger = CORRELATE(danger[0,0:cutind],danger[1,0:cutind])
+;
+;diffval = 100*(ppure-pdanger)/ppure
+;PRINT, 'The pure coefficient is: ',ppure
+;PRINT, 'The both coefficient is: ',pdanger
+;PRINT, 'The difference between the two is: ', diffval,'%'
 
 PRINT, 'Ending script!'
 
