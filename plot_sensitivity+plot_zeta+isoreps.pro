@@ -23,12 +23,13 @@ style1 = 0
 style2 = 2
 
 output_per_decade = 10
-decade = 6
+decade = 5
 time_num = decade*output_per_decade + 1 
 ;time_num = 61
 ;PRINT, time_num
 
 isoreps = ['001OPR','01OPR','3OPR']
+wintitle = ['Varied','0.01','0.1','3'] 
 isocolor = ['red','green','blue']
 isonum = SIZE(isoreps, /N_ELEMENTS)
 nrep = 238;SIZE(rep, /N_ELEMENTS)
@@ -44,7 +45,7 @@ range_abundance = [1e-5,0.1]
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
 
-CD, '/home/cns/jenny_project/variational_analysis/104_dens_at_10K_001_OPRLOW'
+CD, '/home/cns/jenny_project/variational_analysis/10K_fixed_OPR/both_densecloud'
 
 
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
@@ -60,7 +61,8 @@ loadct, NUM_CT, RGB_TABLE = list_colors
 
 plot_name = 'notitle_abs_vs_zeta_105dens_24K.eps'
 print,' eps file : ',plot_name
-read,'eps (0) or screen (1)',aff
+;read,'eps (0) or screen (1)',aff
+aff = 1
 if aff eq 0 then begin
   set_plot,'ps'
   device, filename=plot_name,scale_factor=2,/landscape,/COLOR
@@ -102,8 +104,10 @@ ab_select = fltarr(ntime,npoint)
 ;MARGIN=[0.2,0.1,0.1,0.2]);,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
 
 FOR ii=0,isonum DO BEGIN
-  
+
 IF ii ne 0 THEN BEGIN
+  nrep=240
+  zeta_array = fltarr(nrep)
   CD, '/home/cns/jenny_project/variational_analysis/10K_fixed_OPR/' + isoreps[ii-1]
   zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
   PRINT, isoreps[ii-1]
@@ -112,11 +116,11 @@ ENDIF
 for r=1,nrep do begin
 ;PRINT, r
 
-IF ii eq 0 THEN BEGIN
+;IF ii eq 0 THEN BEGIN
   rep =   base_rep + STRTRIM(r-1,1)
-ENDIF ELSE BEGIN
-  rep = base_rep + STRTRIM(r-1,1)
-ENDELSE
+;ENDIF ELSE BEGIN
+;  rep = base_rep + STRTRIM(r,1)
+;ENDELSE
 
 for s=0,nsp-1 do begin
 
@@ -166,7 +170,7 @@ IF ii eq 0 THEN BEGIN
 ENDIF ELSE BEGIN
   zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
 ENDELSE
-out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
+;out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 
 ;PRINT, zeta_data.FIELD5[r-1]
 ;zetaColor = (zeta_data.FIELD1[r-1]-zetaMin)/(zetaMax - zetaMin)
@@ -211,28 +215,27 @@ plot1 = plot(danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zet
   xtitle = '    x 10!E17!N s!E-1!N', $
   xstyle=1,$
   ystyle=1, $
-  TITLE='T=10 K, n!DH2!N=10!E4!N cm!E-3!N', $
+  TITLE='time=10!E5!N yr, T=10 K, n!DH2!N=10!E5!N cm!E-3!N', $
   ;  LINESTYLE=0, THICK=2, COLOR='red', $
   SYMBOL='Circle',SYM_FILLED=1,SYM_SIZE=0.7,COLOR='black',LINESTYLE='6', $
   FONT_NAME='Hershey 3',FONT_SIZE=12, $
-  YRANGE=[8,1E4], XRANGE=[1E-1,100],MARGIN=[0.2,0.2,0.1,0.1]);, /NODATA
+  YRANGE=[10,10000], XRANGE=[8E-2,100],MARGIN=[0.2,0.2,0.1,0.1]);, /NODATA
 xname = TEXT(0.47,0.127,'f',FONT_NAME='Hershey 4')
 ENDIF ELSE BEGIN
   plot2 = plot(danger[0,*]*1E17,danger[1,*], /OVERPLOT, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
-    /xlog,/ylog, $ ;charsize=1.5, $
-    ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
-    xtitle = '    x 10!E17!N s!E-1!N', $
     xstyle=1,$
     ystyle=1, $
-    TITLE='T=10 K, n!DH2!N=10!E4!N cm!E-3!N', $
-    LINESTYLE=0, THICK=2, COLOR=isocolor[ii-1], $
+    LINESTYLE=0, THICK=2, COLOR=isocolor[ii-1])
 ;    SYMBOL='Circle',SYM_FILLED=1,SYM_SIZE=0.7,COLOR='black',LINESTYLE='6', $
-    FONT_NAME='Hershey 3',FONT_SIZE=12, $
-    YRANGE=[8,1E4], XRANGE=[1E-1,100],MARGIN=[0.2,0.2,0.1,0.1]);, /NODATA
-  xname = TEXT(0.47,0.127,'f',FONT_NAME='Hershey 4')
 ENDELSE
 
 ENDFOR ;ii
+
+leg = LEGEND(POSITION=[50,6000],/DATA,FONT_NAME='Hershey 3',FONT_SIZE=12)
+leg[0].label = 'Varied'
+leg[1].label = '0.01'
+leg[2].label = '0.1'
+leg[3].label = '3.0'
 
 ;cgplot, danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
 ;  /xlog,/ylog, $ ;charsize=1.5, $
@@ -267,10 +270,6 @@ loadct, NUM_CT
 ;              FONT_SIZE=16, THICK= 0.5,FONT_NAME='Hershey 3')
 ;PRINT, pure_zeta.FIELD2
 
-;WRITE_CSV, 'abundances.csv',out_array
-;outname = redpath + STRTRIM(string(time_num),1) + '_time_' + varied + '.csv'
-;PRINT, outname
-;WRITE_CSV, outname, zeta_data.FIELD5[0:nrep-1],zeta_array
 
 if aff eq 0 then begin
   device,/close
@@ -298,20 +297,6 @@ endif
 ;sortIndex = Sort( danger[0,*] )
 ;FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
 
-;Now truncate the 2d array at a point in zeta corresponding to the transition
-;from multiply to single valued.
-;zetacutoff = 1E-16
-;cutind = 0
-;FOR j=0,nrep-1 DO BEGIN
-;  IF ( pure[0,j] GE zetacutoff ) THEN BEGIN
-;    PRINT, "********************"
-;    PRINT, pure[0,j]
-;    PRINT, "The zeta value",pure[0,j]," is greater than the cutoff"
-;    cutind = j
-;    PRINT, "The cutind is: ",cutind
-;    BREAK
-;  ENDIF
-;ENDFOR
 
 PRINT, 'Ending script!'
 
