@@ -12,49 +12,43 @@ loadct, NUM_CT, RGB_TABLE = list_colors
 zmax = 1E-15
 zmin = 1E-18
 
-
 ntime = 81
 npoint = 1
 ns = 1574
 
-species_tab=['HD']
-temperature = 24
+species_tab=['D','HCO+','DCO+']
+temperature = 10
 
 output_per_decade = 10
 decade = 6
-time_num = decade*output_per_decade + 1 
+time_num = decade*output_per_decade + 1
 ;time_num = 61
-PRINT, time_num
 
 nrep = 228;SIZE(rep, /N_ELEMENTS)
 base_rep = 'both_run_'
 
-
-
-x_range = [1e0,1e6]
-y_range = [1,2]
+x_range = [1e0,1e8]
+y_range = [1.0E-18,1.0E-4]
 
 ;out_array = fltarr(nrep+1,ntime)
-zeta_array = fltarr(nrep)
+;zeta_array = fltarr(nrep)
 
 
-zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
+;zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
 ;pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
-
-plot_name = '/home/cns/Pictures/24K_opr_vs_zeta.eps'
+;plot_name = '/home/cns/Pictures/24K_opr_vs_zeta.eps'
+CD, '~/jenny_project/10K_3_OPR_single_run'
 
 ; === IDL/GDL CODE ========================================
 
 device,decomposed=0
 loadct,NUM_CT
 
-;print,' eps file : ',plot_name
-;read,'eps (0) or screen (1)',aff
 aff = 1
 if aff eq 0 then begin
   set_plot,'ps'
   device, filename=plot_name,scale_factor=1.1,/landscape,/COLOR
-endif 
+endif
 
 nsp=size(species_tab,/N_ELEMENTS)
 
@@ -66,7 +60,7 @@ spec = strarr(ns)
 for i=0,ns-1 do begin
 	readf,1,format='(a12)',aa
 	spec(i)=strcompress(aa, /remove_all)
-endfor	
+endfor
 close,1
 
 ab_select_1 = fltarr(ntime,npoint)
@@ -85,13 +79,11 @@ ab_select = fltarr(ntime,npoint)
 ;-----2D PLOT------------------------------------------------------------
 plot1 = plot( time_all/3.15e7, ab_select(*,0), $
   /xlog,/ylog, /zlog,$ ;charthick=2, $ ;charsize=1.5, $
-  xtitle='time [yr]',ytitle='['+species_tab[0] + ']', $
-;  xrange=[1e0,1E8],yrange=[1,1E5], $
-  XRANGE=[0,1E8], $
-;  YTICKVALUES=[10,100,1000,10000,100000], $
-  /NODATA,FONT_NAME='Hershey 3',$
+  xtitle='time [yr]',ytitle= 'n!IX!N/n!IH2!N', $ ;'['+species_tab[0] + ']', $
+  XRANGE=x_range, $
+  /NODATA,FONT_NAME='Hershey 3',FONT_SIZE=16,$
   title='T=' + STRTRIM(STRING(FIX(temperature)),2) + ' K, n!IH2!N=10!E4!N cm!E-3!N',$
-  MARGIN=[0.2,0.2,0.3,0.2])
+  MARGIN=[0.15,0.15,0.1,0.15], ASPECT_RATIO=0.5 )
 ;------------------------------------------------------------------------
 
 
@@ -120,12 +112,12 @@ plot1 = plot( time_all/3.15e7, ab_select(*,0), $
 ;ax[2].TEXTPOS = 1
 ;--------------------------------------------------------------------
 
-  
-for r=1,nrep do begin
-  rep =   base_rep + STRTRIM(r-1,1)
-  IF ( zeta_data.FIELD1[r-1] gt 1 or zeta_data.FIELD5[r-1] gt 1E-15 or zeta_data.FIELD5[r-1] lt 1E-18) THEN BEGIN
-    GOTO, jump1
-  ENDIF
+
+;for r=1,nrep do begin
+;  rep =   base_rep + STRTRIM(r-1,1)
+;  IF ( zeta_data.FIELD1[r-1] gt 1 or zeta_data.FIELD5[r-1] gt 1E-15 or zeta_data.FIELD5[r-1] lt 1E-18) THEN BEGIN
+;    GOTO, jump1
+;  ENDIF
 
 
 for s=0,nsp-1 do begin
@@ -136,7 +128,8 @@ index = where(spec eq species)
 IF index EQ -1 THEN STOP
 for i=0,ntime-1 do begin
   char = string(i+1,format='(i06)')
-  char = strcompress( './' + rep + '/output_1D.'+char, /remove_all)
+;  char = strcompress( './' + rep + '/output_1D.'+char, /remove_all)
+  char = strcompress( './' + '/output_1D.'+char, /remove_all)
   openr,1,char, /f77_unformatted
   readu,1,time
   time_all(i)=time
@@ -152,34 +145,44 @@ if s eq 0 then ab_select_1 = ab_select
 if s eq 1 then ab_select_2 = ab_select
 if s eq 2 then ab_select_3 = ab_select
 
-;plot2 = plot( time_all/3.15e7,ab_select(*,0), $
-;       linestyle=0,color=color_tab[species_color[s]], /OVERPLOT)
+
+;-------------------------------------------------------------------------------
+;-----2D PLOT-------------------------------------------------------------------
+;-----Abundance-----------------------------------------------------------------
+;-------------------------------------------------------------------------------
+plot2 = plot( time_all/3.15e7,ab_select(*,0), $
+       linestyle = s, /OVERPLOT )
 
 ;leg = LEGEND(TARGET=[plot2], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=,/RELATIVE)
-
-;leg = LEGEND(TARGET=[plot2], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=leg_label[r], /RELATIVE)
+; leg = LEGEND(TARGET=[plot2], POSITION=[0.87,0.2+s*0.1], LABEL=species_tab[s], $
+      ; SHADOW = 0, /RELATIVE)
 
 ;POSITION=[70,0.0000000001+(nsp-s-1)*0.000005+0.00001*(nsp-1-s)]
 endfor ;s
 
-;print, ab_select_1(*,0)/ab_select_2(*,0)
 ;IF ( zeta_data.FIELD1[r-1] le 1 or zeta_data.FIELD5[r-1] le 1E-15 ) THEN BEGIN
-  zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
+;  zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
 ;ENDIF
 ;out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 
+
+;-------------------------------------------------------------------------------
+;-----Get Color Info------------------------------------------------------------
+;-------------------------------------------------------------------------------
 ;PRINT, ab_select_1(*,0)/ab_select_2(*,0)
 ;FOR nn = 0,nrep-1 DO BEGIN
 ; zeta_array[nn] = zeta_data.FIELD5[r-1]
 ;ENDFOR
+
 ;v1 = ALOG10(zmax)
 ;v2 = ALOG10(zmin)
 ;vx = ALOG10(zeta_data.FIELD5[r-1])
-;
 ;zeta_color = FIX(255*( 1-((v1-vx)/(v1-v2))))
-;;------------------------------------------------------------------------
-;-----2D PLOT------------------------------------------------------------
-plot2 = plot( time_all/3.15e7,ab_select_1(*,0), /OVERPLOT )
+
+;-------------------------------------------------------------------------
+;-----2D PLOT-------------------------------------------------------------
+;-----Abundance ratio-----------------------------------------------------
+;-------------------------------------------------------------------------
 ;plot3 = plot( time_all/3.15e7,ab_select_1(*,0)/ab_select_2(*,0),/OVERPLOT ) ;, $
 ;              color=[list_colors[zeta_color,0],list_colors[zeta_color,1],list_colors[ze
 ;-----------------------------------------------------------------------
@@ -197,13 +200,20 @@ plot2 = plot( time_all/3.15e7,ab_select_1(*,0), /OVERPLOT )
 ;leg_name2 = species_tab[1] + '/' + species_tab[0]
 
 ;leg = LEGEND(TARGET=[plot4], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=leg_label[r], /RELATIVE)
-jump1: PRINT, 'parameters out of range'
-endfor ;r
+;jump1: PRINT, 'parameters out of range'
+;endfor ;r
+
+leg = LEGEND(POSITION=[0.85,0.3],FONT_SIZE=16,FONT_NAME='Hershey 3',/RELATIVE)
+leg[0].label = species_tab[0]
+leg[1].label = species_tab[1]
+leg[2].label = species_tab[2]
+
+plot2.yrange = [1E-18,1E-4]
 
 ;porygon = POLYGON([1E6,1E6,1E6,1E6],[1E-18,1E-18,1E-15,1E-15],[1,1E5,1E5,1],$
 ;                   TARGET=plot4,/DATA, FILL_COLOR='gray', FILL_TRANSPARENCY=10)
 ;
- 
+
 ;zetaplot = plot(zeta_data.FIELD5[0:nrep-1]*1E17, zeta_array, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
 ;  /xlog,/ylog, $ ;charsize=1.5, $
 ;  ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
@@ -237,6 +247,7 @@ endfor ;r
 ;  spawn, 'epstopdf '+plot_name
 ;endif
 
+CD, '~/idl_scripts'
 PRINT, 'Ending script!'
 
 end

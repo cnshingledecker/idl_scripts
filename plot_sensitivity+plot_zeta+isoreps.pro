@@ -23,16 +23,16 @@ style1 = 0
 style2 = 2
 
 output_per_decade = 10
-decade = 5
-time_num = decade*output_per_decade + 1 
+decade = 7
+time_num = decade*output_per_decade + 1
 ;time_num = 61
 ;PRINT, time_num
 
-isoreps = ['001OPR','01OPR','3OPR']
-wintitle = ['Varied','0.01','0.1','3'] 
+isoreps = ['0_01_zeta_only','0_1_zeta_only','3_zeta_only']
+wintitle = ['Varied','0.01','0.1','3']
 isocolor = ['red','green','blue']
 isonum = SIZE(isoreps, /N_ELEMENTS)
-nrep = 238;SIZE(rep, /N_ELEMENTS)
+nrep = 228;SIZE(rep, /N_ELEMENTS)
 base_rep = 'both_run_'
 PRINT, "The number of reps is",nrep
 
@@ -45,7 +45,7 @@ range_abundance = [1e-5,0.1]
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
 
-CD, '/home/cns/jenny_project/variational_analysis/10K_fixed_OPR/both_densecloud'
+CD, '/home/cns/jenny_project/both_001_1_OPR_24K_104_dens/'
 
 
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
@@ -66,7 +66,7 @@ aff = 1
 if aff eq 0 then begin
   set_plot,'ps'
   device, filename=plot_name,scale_factor=2,/landscape,/COLOR
-endif 
+endif
 
 nsp=size(species_tab,/N_ELEMENTS)
 
@@ -78,7 +78,7 @@ spec = strarr(ns)
 for i=0,ns-1 do begin
 	readf,1,format='(a12)',aa
 	spec(i)=strcompress(aa, /remove_all)
-endfor	
+endfor
 close,1
 
 ab_select_1 = fltarr(ntime,npoint)
@@ -108,7 +108,7 @@ FOR ii=0,isonum DO BEGIN
 IF ii ne 0 THEN BEGIN
   nrep=240
   zeta_array = fltarr(nrep)
-  CD, '/home/cns/jenny_project/variational_analysis/10K_fixed_OPR/' + isoreps[ii-1]
+  CD, '/home/cns/jenny_project/' + isoreps[ii-1]
   zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
   PRINT, isoreps[ii-1]
 ENDIF
@@ -116,11 +116,11 @@ ENDIF
 for r=1,nrep do begin
 ;PRINT, r
 
-;IF ii eq 0 THEN BEGIN
+IF ii eq 0 THEN BEGIN
   rep =   base_rep + STRTRIM(r-1,1)
-;ENDIF ELSE BEGIN
-;  rep = base_rep + STRTRIM(r,1)
-;ENDELSE
+ENDIF ELSE BEGIN
+  rep = base_rep + STRTRIM(r,1)
+ENDELSE
 
 for s=0,nsp-1 do begin
 
@@ -174,7 +174,7 @@ ENDELSE
 
 ;PRINT, zeta_data.FIELD5[r-1]
 ;zetaColor = (zeta_data.FIELD1[r-1]-zetaMin)/(zetaMax - zetaMin)
-;zetaColor = FIX(zetaColor*255) 
+;zetaColor = FIX(zetaColor*255)
 ;red = list_colors[zetaColor,0]
 ;green = list_colors[zetaColor,1]
 ;blue = list_colors[zetaColor,2]
@@ -194,12 +194,12 @@ endfor ;r
 ;PRINT, list_colors[zetaColor,*]
 
 ;Now do the same for the both data
-IF ii eq 0 THEN BEGIN 
+IF ii eq 0 THEN BEGIN
   danger = MAKE_ARRAY(2,nrep)
   danger[0,*] = zeta_data.FIELD5[0:nrep-1]
   danger[1,*] = zeta_array
   sortIndex = Sort( danger[0,*] )
-  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex] 
+  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
 ENDIF ELSE BEGIN
   danger = MAKE_ARRAY(2,nrep)
   danger[0,*] = zeta_data.FIELD5[0:nrep-1]
@@ -215,12 +215,13 @@ plot1 = plot(danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zet
   xtitle = '    x 10!E17!N s!E-1!N', $
   xstyle=1,$
   ystyle=1, $
-  TITLE='time=10!E5!N yr, T=10 K, n!DH2!N=10!E5!N cm!E-3!N', $
+  TITLE='T=24 K, n!DH2!N=10!E4!N cm!E-3!N', $
   ;  LINESTYLE=0, THICK=2, COLOR='red', $
   SYMBOL='Circle',SYM_FILLED=1,SYM_SIZE=0.7,COLOR='black',LINESTYLE='6', $
-  FONT_NAME='Hershey 3',FONT_SIZE=12, $
-  YRANGE=[10,10000], XRANGE=[8E-2,100],MARGIN=[0.2,0.2,0.1,0.1]);, /NODATA
-xname = TEXT(0.47,0.127,'f',FONT_NAME='Hershey 4')
+  FONT_NAME='Hershey 3',FONT_SIZE=20, $
+  YRANGE=[10,10000], XRANGE=[8E-2,300],MARGIN=[0.15,0.15,0.1,0.15], $
+  ASPECT_RATIO=1, YTICKNAME=['10!E1!N','10!E2!N','10!E3!N','10!E4!N']);, /NODATA
+xname = TEXT(0.4,0.025,'f',FONT_NAME='Hershey 4',FONT_SIZE=20)
 ENDIF ELSE BEGIN
   plot2 = plot(danger[0,*]*1E17,danger[1,*], /OVERPLOT, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
     xstyle=1,$
@@ -231,7 +232,7 @@ ENDELSE
 
 ENDFOR ;ii
 
-leg = LEGEND(POSITION=[50,6000],/DATA,FONT_NAME='Hershey 3',FONT_SIZE=12)
+leg = LEGEND(POSITION=[0.7,7000],/DATA,FONT_NAME='Hershey 3',FONT_SIZE=20)
 leg[0].label = 'Varied'
 leg[1].label = '0.01'
 leg[2].label = '0.1'
@@ -240,7 +241,7 @@ leg[3].label = '3.0'
 ;cgplot, danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
 ;  /xlog,/ylog, $ ;charsize=1.5, $
 ;  xtitle='$\zeta$ x 10$\up17$ s$\up-1$',ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
-;  xstyle=1,$ 
+;  xstyle=1,$
 ;  ystyle=1, $
 ;;  TITLE='Abundance Ratio vs. $\zeta$ at 10$\up6$ yr T=10K & n$\downH2$=10$\up4$ cm$\up-3$)', $
 ;;  LINESTYLE=0, THICK=2, COLOR='red', $
@@ -281,7 +282,7 @@ endif
 ;pure = MAKE_ARRAY(2,nrep)
 ;pure[0,*] = pure_zeta.FIELD1
 ;pure[1,*] = pure_zeta.FIELD2
-;Print, pure 
+;Print, pure
 
 ; Sort the 2d array based on the values of the first column
 ;sortIndex = Sort( pure[0,*] )
@@ -298,6 +299,7 @@ endif
 ;FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
 
 
+CD, '~/idl_scripts'
 PRINT, 'Ending script!'
 
 end
