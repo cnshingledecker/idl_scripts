@@ -1,0 +1,6 @@
+*.BAK
+plot_sensitivity+plot_zeta+isoreps.pro.10916.#01
+*.#01
+plot_sensitivity+error_analysis.300.#02
+*.#02
+*.tmp

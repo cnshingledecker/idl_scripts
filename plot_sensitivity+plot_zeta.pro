@@ -17,7 +17,7 @@ npoint = 1
 ns = 1574
 
 species_tab=['D','HCO+','DCO+']
-temperature = 10
+temperature = 24 
 
 output_per_decade = 10
 decade = 6
@@ -35,9 +35,7 @@ y_range = [1.0E-18,1.0E-4]
 
 
 ;zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
-;pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
-;plot_name = '/home/cns/Pictures/24K_opr_vs_zeta.eps'
-CD, '~/jenny_project/10K_3_OPR_single_run'
+CD, 'E:\jenny_project\24K_3_OPR_single_run'
 
 ; === IDL/GDL CODE ========================================
 
@@ -81,7 +79,7 @@ plot1 = plot( time_all/3.15e7, ab_select(*,0), $
   /xlog,/ylog, /zlog,$ ;charthick=2, $ ;charsize=1.5, $
   xtitle='time [yr]',ytitle= 'n!IX!N/n!IH2!N', $ ;'['+species_tab[0] + ']', $
   XRANGE=x_range, $
-  /NODATA,FONT_NAME='Hershey 3',FONT_SIZE=16,$
+  /NODATA,FONT_NAME='Helvetica',FONT_SIZE=20,$
   title='T=' + STRTRIM(STRING(FIX(temperature)),2) + ' K, n!IH2!N=10!E4!N cm!E-3!N',$
   MARGIN=[0.15,0.15,0.1,0.15], ASPECT_RATIO=0.5 )
 ;------------------------------------------------------------------------
@@ -203,7 +201,7 @@ endfor ;s
 ;jump1: PRINT, 'parameters out of range'
 ;endfor ;r
 
-leg = LEGEND(POSITION=[0.85,0.3],FONT_SIZE=16,FONT_NAME='Hershey 3',/RELATIVE)
+leg = LEGEND(POSITION=[0.8,0.3],FONT_SIZE=20,FONT_NAME='Helvetica',/RELATIVE)
 leg[0].label = species_tab[0]
 leg[1].label = species_tab[1]
 leg[2].label = species_tab[2]

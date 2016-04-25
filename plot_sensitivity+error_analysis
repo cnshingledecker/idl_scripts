@@ -6,12 +6,18 @@ zetaMax = 1 ;1E-15 ;1
 zetaMin = .01 ;1E-18 ;.01
 
 xmin = 0.1
-xmax = 100
-ymax = 1E3
-ymin = 0.1
+xmax = 700
+ymax = 1E4
+ymin = 10
 obsmax = 833.33 
 obsmin = 625.00
 
+zeta_error_max = xmin/1.0E17
+zeta_error_min = xmax/1.0E17 
+PRINT, 'Initially, zeta_error_max=',zeta_error_max
+PRINT, 'Initially, zeta_error_min=',zeta_error_min
+time_max = 80
+time_min = 70
 
 varied = '001_to_3_OPR'
 ntime = 81
@@ -27,14 +33,16 @@ style2 = 2
 output_per_decade = 10
 decade = 7
 time_num = decade*output_per_decade + 1
-time_num = 60	
+time_num = 80	
 ;PRINT, time_num
 
-isoreps = ['0_01_fixed_OPR','0_1_fixed_OPR','3_fixed_OPR']
+isoreps = ['0_01_zeta_only','0_1_zeta_only','3_zeta_only']
+;isoreps = []
 wintitle = ['Varied','0.01','0.1','3']
+;wintitle = []
 isocolor = ['red','green','blue']
 isonum = SIZE(isoreps, /N_ELEMENTS)
-nrep = 226;SIZE(rep, /N_ELEMENTS)
+nrep = 228;SIZE(rep, /N_ELEMENTS)
 base_rep = 'both_run_'
 PRINT, "The number of reps is",nrep
 
@@ -47,14 +55,19 @@ range_abundance = [1e-5,0.1]
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
 
-CD, 'E:\jenny_project\variational_analysis\105_dens_at_10K\'
+CD, 'E:\jenny_project\both_001_1_OPR_24K_104_dens\'
+
 
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
+;pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
+
+;print, zeta_data.FIELD2
 
 ; === IDL/GDL CODE ========================================
 
 device,decomposed=0
 loadct, NUM_CT, RGB_TABLE = list_colors
+
 
 plot_name = 'notitle_abs_vs_zeta_105dens_24K.eps'
 print,' eps file : ',plot_name
@@ -100,25 +113,32 @@ ab_select = fltarr(ntime,npoint)
 ;DIMENSIONS=[1000,1000], $
 ;MARGIN=[0.2,0.1,0.1,0.2]);,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
 
-FOR ii=0,isonum DO BEGIN
+;FOR ii=0,isonum DO BEGIN
 
-IF ii ne 0 THEN BEGIN
-  nrep=98
-  zeta_array = fltarr(nrep)
-  CD, 'E:\jenny_project\variational_analysis\105_dens_at_10K_fixed_OPR_set\' + isoreps[ii-1]
-  zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
-  PRINT, isoreps[ii-1]
-ENDIF
+;IF ii ne 0 THEN BEGIN
+;  nrep=240
+;  zeta_array = fltarr(nrep)
+;  CD, 'E:\jenny_project\w51c_constant_opr\' + isoreps[ii-1]
+;  zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
+;  PRINT, isoreps[ii-1]
+;ENDIF
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;ERROR CHECKING;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+FOR ii=time_min,time_max DO BEGIN
+  time_num = ii
+  PRINT, '********************'
+  PRINT, 'Time_num=',time_num
 
-FOR r=1,nrep DO BEGIN
+for r=1,nrep do begin
 ;PRINT, r
 
-IF ii eq 0 THEN BEGIN
+;IF ii eq 0 THEN BEGIN
   rep =   base_rep + STRTRIM(r-1,1)
-ENDIF ELSE BEGIN
-  rep = base_rep + STRTRIM(r-1,1)
-ENDELSE
+;ENDIF ELSE BEGIN
+;  rep = base_rep + STRTRIM(r,1)
+;ENDELSE
 
 for s=0,nsp-1 do begin
 
@@ -143,23 +163,35 @@ if s eq 0 then ab_select_1 = ab_select
 if s eq 1 then ab_select_2 = ab_select
 if s eq 2 then ab_select_3 = ab_select
 
+
+
+;print,'    ','time [yr] abundance '+species_tab[s]+' [/nH] '+color_tab_name[species_color[s]]
+;for i=0,ntime-1 do print,time_all(i)/3.15e7,ab_select(i,0)
+
 ;plot2 = plot( time_all/3.15e7,ab_select(*,0), $
 ;       linestyle=0,color=color_tab[species_color[s]], /OVERPLOT)
 
 ;leg = LEGEND(TARGET=[plot2], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=,/RELATIVE)
+
 ;leg = LEGEND(TARGET=[plot2], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=leg_label[r], /RELATIVE)
+
 ;POSITION=[70,0.0000000001+(nsp-s-1)*0.000005+0.00001*(nsp-1-s)]
 endfor ;s
 
 ;plot3 = plot( time_all/3.15e7,ab_select_1(*,0)/ab_select_2(*,0), $
 ;       linestyle=species_style[1], /OVERPLOT)
 
+;print, ab_select_1(*,0)/ab_select_2(*,0)
 
-IF ii eq 0 THEN BEGIN
+;IF ii eq 0 THEN BEGIN
   zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
-ENDIF ELSE BEGIN
-  zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
-ENDELSE
+  IF zeta_array(r-1) GT obsmin AND zeta_array(r-1) LT obsmax THEN BEGIN
+    IF zeta_data.FIELD5(r-1) GT zeta_error_max THEN zeta_error_max = zeta_data.FIELD5(r-1)
+    IF zeta_data.FIELD5(r-1) LT zeta_error_min THEN zeta_error_min = zeta_data.FIELD5(r-1)
+  ENDIF
+;ENDIF ELSE BEGIN
+;  zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
+;ENDELSE
 ;out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 
 ;PRINT, zeta_data.FIELD5[r-1]
@@ -171,62 +203,67 @@ ENDELSE
 ;plot4 = plot( time_all/3.15e7,ab_select_1(*,0)/ab_select_2(*,0), $
 ;       linestyle=0,thick=0,color=[red,green,blue], /OVERPLOT )
 
-
 ;leg_name = species_tab[0] + '/' + species_tab[1]
+
 ;leg = LEGEND(TARGET=[plot3], POSITION=[0.2,0.8+s*0.1],/AUTO_TEXT_COLOR, LABEL=leg_name, FONT_NAME='Hershey 3', /RELATIVE)
+
 ;leg_name2 = species_tab[1] + '/' + species_tab[0]
+
 ;leg = LEGEND(TARGET=[plot4], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=leg_label[r], /RELATIVE)
 
 ;PRINT, 'run',r,'of',nrep
-ENDFOR ;r
+endfor ;r
 
+;PRINT, list_colors[zetaColor,*]
 
 ;Now do the same for the both data
-IF ii eq 0 THEN BEGIN
-  danger = MAKE_ARRAY(2,nrep)
-  danger[0,*] = zeta_data.FIELD5[0:nrep-1]
-  danger[1,*] = zeta_array
-  sortIndex = Sort( danger[0,*] )
-  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
-ENDIF ELSE BEGIN
-  danger = MAKE_ARRAY(2,nrep)
-  danger[0,*] = zeta_data.FIELD5[0:nrep-1]
-  danger[1,*] = zeta_array
-  sortIndex = Sort( danger[0,*] )
-  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
-ENDELSE
+;IF ii eq 0 THEN BEGIN
+;  danger = MAKE_ARRAY(2,nrep)
+;  danger[0,*] = zeta_data.FIELD5[0:nrep-1]
+;  danger[1,*] = zeta_array
+;  sortIndex = Sort( danger[0,*] )
+;  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
+;ENDIF ELSE BEGIN
+;  danger = MAKE_ARRAY(2,nrep)
+;  danger[0,*] = zeta_data.FIELD5[0:nrep-1]
+;  danger[1,*] = zeta_array
+;  sortIndex = Sort( danger[0,*] )
+;  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
+;ENDELSE
 
-IF ii eq 0 THEN BEGIN
-  plot1 = plot(danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
-  /xlog,/ylog, $ ;charsize=1.5, $
-  ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
-  xtitle = '$\zeta$ x 10!E17!N s!E-1!N', $
-  xstyle=1,$
-  ystyle=1, $
-  TITLE='T=10 K, n!DH2!N=10!E5!N cm!E-3!N', $
-  ;  LINESTYLE=0, THICK=2, COLOR='red', $
-  SYMBOL='Circle', $
-  SYM_FILLED=1, SYM_SIZE=0.7, COLOR='black', LINESTYLE='6', $
-  FONT_NAME='Helvetica',FONT_SIZE=20, $
-  ASPECT_RATIO = 0.7, $
-  YRANGE=[ymin,ymax], $
-  XRANGE=[xmin,xmax], $
-  MARGIN=[0.15,0.15,0.1,0.15], $
-  YTICKNAME=['$10^{-1}$','$10^0$','$10^1$','$10^2$','$10^3$'])
-ENDIF ELSE BEGIN
-  plot2 = plot(danger[0,*]*1E17,danger[1,*], /OVERPLOT, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
-  xstyle=1,$
-  ystyle=1, $
-  LINESTYLE=0, THICK=2, COLOR=isocolor[ii-1])
-ENDELSE
+;IF ii eq 0 THEN BEGIN
+;plot1 = plot(danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
+;  /xlog,/ylog, $ ;charsize=1.5, $
+;  ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
+;  xtitle = '$\zeta$ x 10!E17!N s!E-1!N', $
+;  xstyle=1,$
+;  ystyle=1, $
+;  TITLE='T=24 K, n!DH2!N=10!E4!N cm!E-3!N', $
+;  ;  LINESTYLE=0, THICK=2, COLOR='red', $
+;  SYMBOL='Circle',$
+;  SYM_FILLED=1,SYM_SIZE=0.7,COLOR='black',LINESTYLE='6', $
+;  FONT_NAME='Helvetica',FONT_SIZE=20, $
+;  ASPECT_RATIO = 1, $
+;  YRANGE=[ymin,ymax], $
+;  XRANGE=[xmin,xmax], $
+;  MARGIN=[0.15,0.15,0.1,0.15], $
+;  YTICKNAME=['$10^1$','$10^2$','$10^3$','$10^4$'])
+;xname = TEXT(0.9,0.025,'f',FONT_NAME='Hershey 4',FONT_SIZE=20)
+;ENDIF ELSE BEGIN
+;  plot2 = plot(danger[0,*]*1E17,danger[1,*], /OVERPLOT, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
+;    xstyle=1,$
+;    ystyle=1, $
+;    LINESTYLE=0, THICK=2, COLOR=isocolor[ii-1])
+;    SYMBOL='Circle',SYM_FILLED=1,SYM_SIZE=0.7,COLOR='black',LINESTYLE='6', $
+;ENDELSE
 
 ENDFOR ;ii
 
-leg = LEGEND(POSITION=[40,850],/DATA,FONT_NAME='Helvetica',FONT_SIZE=20)
-leg[0].label = 'Varied'
-leg[1].label = '0.01'
-leg[2].label = '0.1'
-leg[3].label = '3.0'
+;leg = LEGEND(POSITION=[0.77,8500],/DATA,FONT_NAME='Helvetica',FONT_SIZE=20)
+;leg[0].label = 'Varied'
+;leg[1].label = '0.01'
+;leg[2].label = '0.1'
+;leg[3].label = '3.0'
 
 ;cgplot, danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
 ;  /xlog,/ylog, $ ;charsize=1.5, $
@@ -239,7 +276,7 @@ leg[3].label = '3.0'
 ;  FONT=-1,CHARSIZE=1.5, $
 ;  YRANGE=[8,1E4], XRANGE=[1E-1,100];, /NODATA
 
-;Add observational constraint regions
+;;Add observational constraint regions
 ;xobs1 = [xmin,xmax,xmax,xmin]
 ;yobs1 = [obsmin,obsmin,obsmax,obsmax]
 ;poly1 = POLYGON(xobs1,yobs1,FILL_COLOR='blue',/DATA, $
@@ -294,6 +331,9 @@ endif
 CD, 'C:\Users\Christopher\Documents\GitHub\idl_scripts'
 PRINT, 'Max zeta=',zeta_error_max
 PRINT, 'Min zeta=',zeta_error_min
+meanval = (zeta_error_max+zeta_error_min)/2.0
+plusminus = (zeta_error_max - zeta_error_min)/2.0
+PRINT, 'The standardized value is:',meanval,'+-',plusminus
 PRINT, 'Max is greater than min by a factor of',zeta_error_max/zeta_error_min
 PRINT, 'Ending script!'
 

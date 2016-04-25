@@ -4,13 +4,12 @@
 ; To run: .r plot_time
 
 ; === PARAMETERS ==========================================
-!PATH = Expand_Path('+~/Dropbox/coyote/') + ':' + !PATH
+;!PATH = Expand_Path('+~/Dropbox/coyote/') + ':' + !PATH
 
 NUM_CT = 13
-zetaMax = 1 ;1E-15 ;1
-zetaMin = 0.01 ;1E-18 ;.01
+zetaMax = 1E-15 ;1
+zetaMin = 1E-18 ;.01
 
-redpath = '/home/cns/w51c_reduced_data/'
 varied = '001_to_3_OPR'
 ntime = 81
 npoint = 1
@@ -38,29 +37,16 @@ range_abundance = [1e-5,0.1]
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
 
-;CD, '/home/cns/jenny_project/variational_analysis/105_dens_at_10K'
-
-
+CD, 'E:\jenny_project\variational_analysis\10K_fixed_OPR\both_densecloud\'
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
-pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
+;pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
 ; === IDL/GDL CODE ========================================
 
 device,decomposed=0
 loadct, NUM_CT, RGB_TABLE = list_colors
 
-
-plot_name = 'notitle_abs_vs_zeta_105dens_24K.eps'
-print,' eps file : ',plot_name
-;read,'eps (0) or screen (1)',aff
-aff = 1
-if aff eq 0 then begin
-  set_plot,'ps'
-  device, filename=plot_name,scale_factor=2,/landscape,/COLOR
-endif 
-
 nsp=size(species_tab,/N_ELEMENTS)
 
-close,1
 
 openr,1,'network.d'
 aa = ' '
@@ -89,14 +75,16 @@ plot1 = plot(time_all/3.15e7,ab_select(*,0), $
 xtitle='time [yr]',ytitle='[HCO+]/[DCO+]', $
 xstyle=1, xrange=range_time, $
 ystyle=1, $ ;yrange=range_abundance, $
-/NODATA,FONT_NAME='Hershey 3',FONT_SIZE=16, $
+/NODATA,FONT_NAME='Helvetica',FONT_SIZE=20, $
 DIMENSIONS=[700,700], $
-MARGIN=[0.21,0.21,0.21,0.21],$
-TITLE='T=10 K, n!IH2!N=10!E4!N cm!E-3!N,  =10!E-17!N s!E-1!N');,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
-t1 = TEXT(0.71,1.05,/RELATIVE,'f',FONT_NAME='Hershey 4',TARGET=plot1)
+MARGIN=[0.21,0.21,0.25,0.21],$
+YTICKVALUES = [10,100,1000,10000], $
+YTICKNAME = ['$10^1$','$10^2$','$10^3$','$10^4$'], $
+TITLE='T=10 K, n!IH2!N=10!E4!N cm!E-3!N') ;, initial OPR = 0.1');,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
 
 for r=1,nrep do begin
 
+  PRINT, 'rep',r,' of',nrep
   rep =   base_rep + STRTRIM(r-1,1)
 
 
@@ -130,7 +118,6 @@ if s eq 2 then ab_select_3 = ab_select
 
 ;plot2 = plot( time_all/3.15e7,ab_select(*,0), $
 ;       linestyle=0,color=color_tab[species_color[s]], /OVERPLOT)
-
 ;leg = LEGEND(TARGET=[plot2], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=,/RELATIVE)
 
 ;leg = LEGEND(TARGET=[plot2], POSITION=[0.2,0.2+r*0.1],/AUTO_TEXT_COLOR, LABEL=leg_label[r], /RELATIVE)
@@ -150,7 +137,7 @@ out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 ;PRINT, zeta_data.FIELD5[r-1]
 v1 = ALOG10(zetaMax)
 v2 = ALOG10(zetaMin)
-vx = ALOG10(zeta_data.FIELD1[r-1])
+vx = ALOG10(zeta_data.FIELD5[r-1])
 
 zeta_color = FIX(255*( 1-((v1-vx)/(v1-v2)))) 
 red = list_colors[zeta_color,0]
@@ -164,11 +151,12 @@ endfor ;r
 
 cb = COLORBAR(target=plot4, ORIENTATION=1, position=[0.91,0.1,0.94,0.7], /BORDER,$
               RGB_TABLE=NUM_CT,RANGE=[0,255],$
-;              TICKNAME=['10!E-18!N s!E-1!N','10!E-17!N s!E-1!N','10!E-16!N s!E-1!N','10!E-15!N s!E-1!N'], $
-;              TICKVALUES =[0,85,170,255],TEXTPOS=1, $
-              TICKNAME=['0.01','0.1','1.0'], $
-              TICKVALUES = [0,127,255], $
-              FONT_SIZE=10, THICK= 1,FONT_NAME='Hershey 3', TEXTPOS=1)
+              TICKNAME=['10!E-18!N','10!E-17!N','10!E-16!N','10!E-15!N'], $
+              TICKVALUES =[0,85,170,255], $
+;              TICKNAME=['0.01','0.1','1.0'], $
+;              TICKVALUES = [0,127,255], $
+              TITLE = '$\zeta$ (s$^{-1}$)', $
+              FONT_SIZE=20, THICK= 1,FONT_NAME='Helvetica', TEXTPOS=1)
 
 
 
