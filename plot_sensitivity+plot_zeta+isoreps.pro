@@ -27,18 +27,21 @@ style2 = 2
 output_per_decade = 10
 decade = 7
 time_num = decade*output_per_decade + 1
-time_num = 60	
+time_num = 51
 ;PRINT, time_num
 
-isoreps = ['0_01_fixed_OPR','0_1_fixed_OPR','3_fixed_OPR']
-wintitle = ['Varied','0.01','0.1','3']
-isocolor = ['red','green','blue']
-isonum = SIZE(isoreps, /N_ELEMENTS)
-nrep = 226;SIZE(rep, /N_ELEMENTS)
+;isoreps = ['0_01_fixed_OPR','0_1_fixed_OPR','3_fixed_OPR']
+isoreps = ['0_01_L1174_opr_fixed','0_1_L1174_opr_fixed','3_L1174_opr_fixed']
+;wintitle = ['Varied','0.01','0.1','3']
+;isocolor = ['red','green','blue']
+;isonum = SIZE(isoreps, /N_ELEMENTS)
+nrep = 214;SIZE(rep, /N_ELEMENTS)
+out_csv_name = "hco+_dco+_both_opr.csv"
 base_rep = 'both_run_'
 PRINT, "The number of reps is",nrep
 
-plot_name = species_tab[0]+'_.eps'
+;plot_name = species_tab[0]+'_.eps'
+plot_name = '1'
 
 range_time = [1e0,1e8]
 range_abundance = [1e-5,0.1]
@@ -46,8 +49,11 @@ range_abundance = [1e-5,0.1]
 
 out_array = fltarr(nrep+1,ntime)
 zeta_array = fltarr(nrep)
+out_df = fltarr(2,1)
+rep_df = make_array(1,value="X")
 
-CD, 'E:\jenny_project\variational_analysis\105_dens_at_10K\'
+CD, '/home/cns/jenny_project/reduced_L1174'
+;CD, 'E:\jenny_project\variational_analysis\105_dens_at_10K\'
 
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
 
@@ -56,10 +62,9 @@ zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
 device,decomposed=0
 loadct, NUM_CT, RGB_TABLE = list_colors
 
-plot_name = 'notitle_abs_vs_zeta_105dens_24K.eps'
 print,' eps file : ',plot_name
 ;read,'eps (0) or screen (1)',aff
-aff = 1
+aff = 0
 if aff eq 0 then begin
   set_plot,'ps'
   device, filename=plot_name,scale_factor=2,/landscape,/COLOR
@@ -100,25 +105,25 @@ ab_select = fltarr(ntime,npoint)
 ;DIMENSIONS=[1000,1000], $
 ;MARGIN=[0.2,0.1,0.1,0.2]);,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
 
-FOR ii=0,isonum DO BEGIN
-
-IF ii ne 0 THEN BEGIN
-  nrep=98
-  zeta_array = fltarr(nrep)
-  CD, 'E:\jenny_project\variational_analysis\105_dens_at_10K_fixed_OPR_set\' + isoreps[ii-1]
-  zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
-  PRINT, isoreps[ii-1]
-ENDIF
+;FOR ii=0,isonum DO BEGIN
+;
+;IF ii ne 0 THEN BEGIN
+;  nrep=98
+;  zeta_array = fltarr(nrep)
+;  CD, 'E:\jenny_project\variational_analysis\105_dens_at_10K_fixed_OPR_set\' + isoreps[ii-1]
+;  zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
+;  PRINT, isoreps[ii-1]
+;ENDIF
 
 
 FOR r=1,nrep DO BEGIN
-;PRINT, r
+PRINT, r
 
-IF ii eq 0 THEN BEGIN
+;IF ii eq 0 THEN BEGIN
   rep =   base_rep + STRTRIM(r-1,1)
-ENDIF ELSE BEGIN
-  rep = base_rep + STRTRIM(r-1,1)
-ENDELSE
+;ENDIF ELSE BEGIN
+;  rep = base_rep + STRTRIM(r-1,1)
+;ENDELSE
 
 for s=0,nsp-1 do begin
 
@@ -155,12 +160,12 @@ endfor ;s
 ;       linestyle=species_style[1], /OVERPLOT)
 
 
-IF ii eq 0 THEN BEGIN
+;IF ii eq 0 THEN BEGIN
   zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
-ENDIF ELSE BEGIN
-  zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
-ENDELSE
-;out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
+;ENDIF ELSE BEGIN
+;  zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
+;ENDELSE
+out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
 
 ;PRINT, zeta_data.FIELD5[r-1]
 ;zetaColor = (zeta_data.FIELD1[r-1]-zetaMin)/(zetaMax - zetaMin)
@@ -182,51 +187,66 @@ ENDFOR ;r
 
 
 ;Now do the same for the both data
-IF ii eq 0 THEN BEGIN
+;IF ii eq 0 THEN BEGIN
   danger = MAKE_ARRAY(2,nrep)
+  rep_temp = make_array(nrep,value=isorep[r])
   danger[0,*] = zeta_data.FIELD5[0:nrep-1]
   danger[1,*] = zeta_array
   sortIndex = Sort( danger[0,*] )
   FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
-ENDIF ELSE BEGIN
-  danger = MAKE_ARRAY(2,nrep)
-  danger[0,*] = zeta_data.FIELD5[0:nrep-1]
-  danger[1,*] = zeta_array
-  sortIndex = Sort( danger[0,*] )
-  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
-ENDELSE
+  out_df = [[out_df],[danger]]
+  rep_df = [[rep_df],[rep_temp]]
+;ENDIF ELSE BEGIN
+;  danger = MAKE_ARRAY(2,nrep)
+;  danger[0,*] = zeta_data.FIELD5[0:nrep-1]
+;  danger[1,*] = zeta_array
+;  sortIndex = Sort( danger[0,*] )
+;  FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
+;ENDELSE
 
-IF ii eq 0 THEN BEGIN
-  plot1 = plot(danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
-  /xlog,/ylog, $ ;charsize=1.5, $
-  ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
-  xtitle = '$\zeta$ x 10!E17!N s!E-1!N', $
-  xstyle=1,$
-  ystyle=1, $
-  TITLE='T=10 K, n!DH2!N=10!E5!N cm!E-3!N', $
-  ;  LINESTYLE=0, THICK=2, COLOR='red', $
-  SYMBOL='Circle', $
-  SYM_FILLED=1, SYM_SIZE=0.7, COLOR='black', LINESTYLE='6', $
-  FONT_NAME='Helvetica',FONT_SIZE=20, $
-  ASPECT_RATIO = 0.7, $
-  YRANGE=[ymin,ymax], $
-  XRANGE=[xmin,xmax], $
-  MARGIN=[0.15,0.15,0.1,0.15], $
-  YTICKNAME=['$10^{-1}$','$10^0$','$10^1$','$10^2$','$10^3$'])
-ENDIF ELSE BEGIN
-  plot2 = plot(danger[0,*]*1E17,danger[1,*], /OVERPLOT, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
-  xstyle=1,$
-  ystyle=1, $
-  LINESTYLE=0, THICK=2, COLOR=isocolor[ii-1])
-ENDELSE
+;PLOT, danger[0,*], $
+;      danger[1,*], $
+;      /xlog,/ylog, $
+;      PSYM = 2, $
+;      XTITLE = 'Cosmic ray ionization rate', $
+;      YTITLE = '[HCO+]/[DCO+]', $
+;      XMARGIN = [10,10],$
+;      YMARGIN = [5,5], $
+;      CHARSIZE = 2.0, $
+;      FONT = 1, $
+;      TITLE = '15 K (Gas and Grain), 1E4 density, 8E5 yr'
 
-ENDFOR ;ii
+;IF ii eq 0 THEN BEGIN
+;  plot1 = plot(danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
+;  /xlog,/ylog, $ ;charsize=1.5, $
+;  ytitle='['+species_tab[0]+']/['+species_tab[1] + ']', $
+;  xtitle = '$\zeta$ x 10!E17!N s!E-1!N', $
+;  xstyle=1,$
+;  ystyle=1, $
+;  TITLE='T=10 K, n!DH2!N=10!E5!N cm!E-3!N', $
+;  ;  LINESTYLE=0, THICK=2, COLOR='red', $
+;  SYMBOL='Circle', $
+;  SYM_FILLED=1, SYM_SIZE=0.7, COLOR='black', LINESTYLE='6', $
+;  FONT_NAME='Helvetica',FONT_SIZE=20, $
+;  ASPECT_RATIO = 0.7, $
+;  YRANGE=[ymin,ymax], $
+;  XRANGE=[xmin,xmax], $
+;  MARGIN=[0.15,0.15,0.1,0.15], $
+;  YTICKNAME=['$10^{-1}$','$10^0$','$10^1$','$10^2$','$10^3$'])
+;ENDIF ELSE BEGIN
+;  plot2 = plot(danger[0,*]*1E17,danger[1,*], /OVERPLOT, $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
+;  xstyle=1,$
+;  ystyle=1, $
+;  LINESTYLE=0, THICK=2, COLOR=isocolor[ii-1])
+;ENDELSE
 
-leg = LEGEND(POSITION=[40,850],/DATA,FONT_NAME='Helvetica',FONT_SIZE=20)
-leg[0].label = 'Varied'
-leg[1].label = '0.01'
-leg[2].label = '0.1'
-leg[3].label = '3.0'
+;ENDFOR ;ii
+
+;leg = LEGEND(POSITION=[40,850],/DATA,FONT_NAME='Helvetica',FONT_SIZE=20)
+;leg[0].label = 'Varied'
+;leg[1].label = '0.01'
+;leg[2].label = '0.1'
+;leg[3].label = '3.0'
 
 ;cgplot, danger[0,*]*1E17,danger[1,*], $;zeta_data.FIELD5[0:nrep-1]*1E17,zeta_array, $ ;
 ;  /xlog,/ylog, $ ;charsize=1.5, $
@@ -256,7 +276,7 @@ leg[3].label = '3.0'
 ;oplot, pure_zeta.FIELD1*1E17,pure_zeta.FIELD2,PSYM='2', COLOR='red',SYMSIZE=0.4
 
 ;c = CONTOUR(zeta_array ,1E17*zeta_data.FIELD2[0:nrep-1],zeta_data.FIELD1[0:nrep-1], /FILL,/XLOG,/YLOG,YRANGE=[0.001,3],RGB_TABLE=22)
-loadct, NUM_CT
+;loadct, NUM_CT
 ;cb = COLORBAR(target=plot4, position=[0.2,0.82,0.9,0.87],/BORDER,ORIENTATION=0,$
 ;              RGB_TABLE=NUM_CT,RANGE=[zetaMin,zetaMax],$
 ;              TICKVALUES=[zetaMin,(zetaMax-zetaMin)/2.0,zetaMax],TEXTPOS=1, $
@@ -264,11 +284,11 @@ loadct, NUM_CT
 ;PRINT, pure_zeta.FIELD2
 
 
-if aff eq 0 then begin
-  device,/close
-  set_plot,'x'
-  spawn, 'epstopdf '+plot_name
-endif
+;if aff eq 0 then begin
+;  device,/close
+;  set_plot,'x'
+;  spawn, 'epstopdf '+ plot_name
+;endif
 
 ;Make a 2d array containing the zeta and abundance ratio information
 ;pure = MAKE_ARRAY(2,nrep)
@@ -291,10 +311,13 @@ endif
 ;FOR j=0,1 DO danger[j, *] = danger[j, sortIndex]
 
 
-CD, 'C:\Users\Christopher\Documents\GitHub\idl_scripts'
-PRINT, 'Max zeta=',zeta_error_max
-PRINT, 'Min zeta=',zeta_error_min
-PRINT, 'Max is greater than min by a factor of',zeta_error_max/zeta_error_min
-PRINT, 'Ending script!'
+;CD, 'C:\Users\Christopher\Documents\GitHub\idl_scripts'
+;PRINT, 'Max zeta=',zeta_error_max
+;PRINT, 'Min zeta=',zeta_error_min
+;PRINT, 'Max is greater than min by a factor of',zeta_error_max/zeta_error_min
+;PRINT, 'Ending script!'
+
+write_csv, '/home/cns/Desktop/f61.csv',out_df,rep_df
+print, ab_select_1(*,0)/ab_select_2(*,0)
 
 end

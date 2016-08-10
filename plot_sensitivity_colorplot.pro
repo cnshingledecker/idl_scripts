@@ -25,7 +25,7 @@ output_per_decade = 10
 decade = 6
 time_num = decade*output_per_decade + 1 
 
-nrep = 235;SIZE(rep, /N_ELEMENTS)
+nrep = 249;SIZE(rep, /N_ELEMENTS)
 base_rep = 'both_run_'
 
 plot_name = species_tab[0]+'_.eps'
@@ -34,10 +34,11 @@ range_time = [1e0,1e8]
 range_abundance = [1e-5,0.1]
 ;range_abundance = [0,1e5]
 
-out_array = fltarr(nrep+1,ntime)
+out_array = fltarr(3,ntime)
+out_df = fltarr(3,1)
 zeta_array = fltarr(nrep)
 
-CD, 'E:\jenny_project\variational_analysis\10K_fixed_OPR\both_densecloud\'
+CD, '/home/cns/jenny_project/variational_analysis/individual_curves/opr_only_densecloud/'
 zeta_data = READ_CSV('both.out',N_TABLE_HEADER=0)
 ;pure_zeta = READ_CSV('/home/cns/Dropbox/W51C/decade_6_zeta.csv',N_TABLE_HEADER=0)
 ; === IDL/GDL CODE ========================================
@@ -70,17 +71,17 @@ ab = fltarr(ns,npoint)
 ab_select = fltarr(ntime,npoint)
 
 
-plot1 = plot(time_all/3.15e7,ab_select(*,0), $
-/xlog,/ylog, $ ;charthick=2, $ ;charsize=1.5, $
-xtitle='time [yr]',ytitle='[HCO+]/[DCO+]', $
-xstyle=1, xrange=range_time, $
-ystyle=1, $ ;yrange=range_abundance, $
-/NODATA,FONT_NAME='Helvetica',FONT_SIZE=20, $
-DIMENSIONS=[700,700], $
-MARGIN=[0.21,0.21,0.25,0.21],$
-YTICKVALUES = [10,100,1000,10000], $
-YTICKNAME = ['$10^1$','$10^2$','$10^3$','$10^4$'], $
-TITLE='T=10 K, n!IH2!N=10!E4!N cm!E-3!N') ;, initial OPR = 0.1');,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
+;plot1 = plot(time_all/3.15e7,ab_select(*,0), $
+;/xlog,/ylog, $ ;charthick=2, $ ;charsize=1.5, $
+;xtitle='time [yr]',ytitle='[HCO+]/[DCO+]', $
+;xstyle=1, xrange=range_time, $
+;ystyle=1, $ ;yrange=range_abundance, $
+;/NODATA,FONT_NAME='Helvetica',FONT_SIZE=20, $
+;DIMENSIONS=[700,700], $
+;MARGIN=[0.21,0.21,0.25,0.21],$
+;YTICKVALUES = [10,100,1000,10000], $
+;YTICKNAME = ['$10^1$','$10^2$','$10^3$','$10^4$'], $
+;TITLE='T=10 K, n!IH2!N=10!E4!N cm!E-3!N') ;, initial OPR = 0.1');,YTICKFORMAT='(g6.0)');, BACKGROUND_COLOR='light grey')
 
 for r=1,nrep do begin
 
@@ -101,6 +102,7 @@ for i=0,ntime-1 do begin
   readu,1,time
   time_all(i)=time
   out_array(0,i) = time/3.15e7
+  out_array(2,i) = zeta_data.FIELD1[r-1]
   readu,1,temp,dens,tau
   readu,1,ab
   ab_select(i,*) = ab(index,*)
@@ -132,41 +134,48 @@ endfor ;s
 
 
 zeta_array(r-1) = ab_select_1(time_num,0)/ab_select_2(time_num,0)
-out_array(r,*) = ab_select_1(*,0)/ab_select_2(*,0)
+out_array(1,*) = ab_select_1(*,0)/ab_select_2(*,0)
+
+
+out_df = [[out_df],[out_array]]
+
+  
 
 ;PRINT, zeta_data.FIELD5[r-1]
-v1 = ALOG10(zetaMax)
-v2 = ALOG10(zetaMin)
-vx = ALOG10(zeta_data.FIELD5[r-1])
+;v1 = ALOG10(zetaMax)
+;v2 = ALOG10(zetaMin)
+;vx = ALOG10(zeta_data.FIELD1[r-1])
 
-zeta_color = FIX(255*( 1-((v1-vx)/(v1-v2)))) 
-red = list_colors[zeta_color,0]
-green = list_colors[zeta_color,1]
-blue = list_colors[zeta_color,2]
-plot4 = plot( time_all/3.15e7,ab_select_1(*,0)/ab_select_2(*,0), $
-       linestyle=0,thick=0,color=[red,green,blue], /OVERPLOT )
 
+;zeta_color = FIX(255*( 1-((v1-vx)/(v1-v2)))) 
+;red = list_colors[zeta_color,0]
+;green = list_colors[zeta_color,1]
+;blue = list_colors[zeta_color,2]
+;plot4 = plot( time_all/3.15e7,ab_select_1(*,0)/ab_select_2(*,0), $
+;       linestyle=0,thick=0,color=[red,green,blue], /OVERPLOT )
+
+print, r
 endfor ;r
 
 
-cb = COLORBAR(target=plot4, ORIENTATION=1, position=[0.91,0.1,0.94,0.7], /BORDER,$
-              RGB_TABLE=NUM_CT,RANGE=[0,255],$
-              TICKNAME=['10!E-18!N','10!E-17!N','10!E-16!N','10!E-15!N'], $
-              TICKVALUES =[0,85,170,255], $
-;              TICKNAME=['0.01','0.1','1.0'], $
-;              TICKVALUES = [0,127,255], $
-              TITLE = '$\zeta$ (s$^{-1}$)', $
-              FONT_SIZE=20, THICK= 1,FONT_NAME='Helvetica', TEXTPOS=1)
+;cb = COLORBAR(target=plot4, ORIENTATION=1, position=[0.91,0.1,0.94,0.7], /BORDER,$
+;              RGB_TABLE=NUM_CT,RANGE=[0,255],$
+;              TICKNAME=['10!E-18!N','10!E-17!N','10!E-16!N','10!E-15!N'], $
+;              TICKVALUES =[0,85,170,255], $
+;;              TICKNAME=['0.01','0.1','1.0'], $
+;;              TICKVALUES = [0,127,255], $
+;              TITLE = '$\zeta$ (s$^{-1}$)', $
+;              FONT_SIZE=20, THICK= 1,FONT_NAME='Helvetica', TEXTPOS=1)
 
 
 
-if aff eq 0 then begin
-  device,/close
-  set_plot,'x'
-  spawn, 'epstopdf '+plot_name
-endif
+;if aff eq 0 then begin
+;  device,/close
+;  set_plot,'x'
+;  spawn, 'epstopdf '+plot_name
+;endif
 
-
+write_csv,"/home/cns/Desktop/f2a.csv",out_df
 
 PRINT, 'Ending script!'
 
